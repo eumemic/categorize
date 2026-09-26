@@ -1,0 +1,3 @@
+Reuse an option when it covers what the input is about; create only for something no option covers.
+
+Baseline failures were almost all duplicates (Opus 18 of 19, DeepSeek 20 of 24): the LLM created a new option when an existing one covered the topic but its description didn't match the input's wording or specificity. The baseline prompt said to reuse only an option that is "correct", which the model read as an exact fit. This round says to reuse when an option covers the topic, even if the input is worded differently, more general or specific, or mentions details the description doesn't, and explains why overlapping options hurt the classifier. Watch create_near for false merges.

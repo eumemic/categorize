@@ -1,0 +1,19 @@
+--- a/src/categorize/propose.py
++++ b/src/categorize/propose.py
+@@ -99,9 +99,13 @@
+         sections.append(f"Retired answers, which you can bring back:\n{_listing(retired)}")
+     sections.append(f"Input:\n{_render(state)}")
+     sections.append(
+-        'If a current or retired answer is correct for this input, reply with decision "reuse" '
+-        'and its key. Otherwise reply with decision "create", a new key, and a description. The '
+-        "key is a short snake_case name for the general kind of answer: one that other inputs "
++        'If a current or retired answer covers what this input is about, reply with decision "reuse" '
++        "and its key, even if the input is worded differently, is more general or more specific, or "
++        "mentions details the answer's description doesn't. Create a new answer only when the input "
++        "is about something none of the answers cover: a new answer that overlaps an existing one "
++        "makes both harder for the classifier to tell apart. To create one, reply with decision "
++        '"create", a new key, and a description. The key is a short snake_case name for the general '
++        "kind of answer: one that other inputs "
+         "could share, not the details of this input, and at the same level of generality as "
+         "the current answers. The description is one sentence saying which inputs the answer "
+         "covers, written so the classifier can tell it apart from the other answers. Reply "

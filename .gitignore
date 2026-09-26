@@ -11,3 +11,11 @@ wheels/
 
 # Example output
 examples/*.json
+
+# Eval downloads and output that can be regenerated
+evals/banking77/data/
+evals/banking77/cases.html
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/trajectory/
+.claude/hillclimb/**/state.json

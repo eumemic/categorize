@@ -1,0 +1,57 @@
+{
+  "reps": 1,
+  "harness_paths": [
+    "evals/run_miss_eval.py",
+    "evals/banking77/cases.jsonl",
+    "evals/banking77/review.json"
+  ],
+  "metrics": [
+    {
+      "id": "correct",
+      "kind": "binary",
+      "label": "Correct"
+    },
+    {
+      "id": "format_ok",
+      "kind": "binary",
+      "label": "Format OK"
+    },
+    {
+      "id": "new_fit",
+      "kind": "float",
+      "scale": 1,
+      "label": "New fit"
+    },
+    {
+      "id": "new_leak",
+      "kind": "float",
+      "scale": 1,
+      "label": "New leak",
+      "better": "lower"
+    }
+  ],
+  "perf_fields": [
+    {
+      "id": "latency_s",
+      "label": "Latency",
+      "unit": "s"
+    },
+    {
+      "id": "cost_usd",
+      "label": "Cost",
+      "unit": "$"
+    },
+    {
+      "id": "in_tokens",
+      "label": "In tokens"
+    },
+    {
+      "id": "out_tokens",
+      "label": "Out tokens"
+    }
+  ],
+  "harness_sha": "ded6b94e6c341f3e6ec5578382d1e00b873367a9e679fc5b8820214ec78368b0",
+  "best": {
+    "round": 2
+  }
+}

@@ -1,0 +1,3 @@
+Reuse when an option is the right answer despite different wording or specificity; create when the right answer differs, even if the subject is shared.
+
+Round 1 cut duplicates but added false merges between options that share a subject yet answer differently (ATM locations merged into which shops accept the card; a delivery-time question merged into a card not arriving). This round goes back to the baseline's 'right answer' test and keeps round 1's leniency about wording and specificity. It adds the counterweight that sharing a subject is not enough, and drops round 1's claim that overlapping answers confuse the classifier. The wording stays generic because the prompt serves every OpenChoice question, not just this dataset.

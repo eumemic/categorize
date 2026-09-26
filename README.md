@@ -100,3 +100,56 @@ asyncio.run(main())
 uv run pytest            # offline: fake jev endpoint and fake LLM
 uv run pytest -m live    # real APIs; costs money; needs ANTHROPIC_API_KEY (and TYPESAFE_API_KEY for end to end)
 ```
+
+## Evals
+
+`evals/` measures what the LLM does on a miss. It gets the question, the current and retired
+options, and an input jev couldn't place. The eval checks whether it reuses the right option,
+restores a retired one, or creates a new one when nothing fits, and whether jev can use the
+options it writes.
+
+The cases come from [BANKING77](https://github.com/PolyAI-LDN/task-specific-datasets): real
+bank-support messages in 77 labeled categories (CC-BY-4.0). `build_banking77.py` builds them in
+three steps. Opus drafts a description for each category, jev finds which categories absorb each
+other's messages, and each case is a message jev can't place with 0.8 probability among 8–40
+options. `review.json` records the hand review: cases dropped for bad labels, and cases where a
+second answer is also right. There are 76 cases:
+- 29 reuse
+- 22 create-near (a confusable category is among the options)
+- 15 create-far
+- 10 restore
+
+| Metric | Meaning |
+| --- | --- |
+| `correct` | Headline. Reused or restored the right option, or created one when the category was absent. |
+| `format_ok` | The first reply parsed, without the retry. |
+| `new_fit` | For a correctly created option: jev's mean probability on it for five other messages of the same category. The true description scores 0.95. |
+| `new_leak` | The same, for five messages from categories among the options. Lower is better. |
+
+```sh
+uv run evals/run_miss_eval.py --model anthropic/claude-opus-5 --variant v4      # writes .claude/hillclimb/miss-claude-opus-5/v4/
+uv run evals/analyze_miss_eval.py miss-claude-opus-5 --variant v4 --against v2  # failure types, paired change per kind
+uv run evals/sanity_check.py                                                    # grader check with fake LLMs
+```
+
+The runner refuses to start when its own code, the cases, or `review.json` have changed since the
+last run with `--approve-harness`. Each variant directory holds its prompt change
+(`change.md`, `change.patch`), results, and traces. `report.html` in each flow directory compares
+the variants; build it with the claude-api skill's `build-report-lite.mjs`. Each row's `cost_usd`
+is LiteLLM's list-price estimate, so it overstates the cost of calls through a proxy or at a
+discount.
+
+Results, 2 reps per case:
+
+| Prompt | Opus 5 | duplicates / false merges | DeepSeek V4.1 Flash | duplicates / false merges |
+| --- | --- | --- | --- | --- |
+| baseline | 0.88 | 18 / 0 | 0.84 | 20 / 2 |
+| v1: reuse whatever covers the topic | 0.89 | 10 / 6 | 0.84 | 11 / 11 |
+| **v2 (current): right answer, despite wording; a shared subject isn't enough** | 0.88 | 17 / 1 | 0.86 | 19 / 0 |
+| v3: new options carry two example inputs (reverted: no change in `correct` or `new_fit`) | 0.88 | 18 / 1 | 0.86 | 22 / 0 |
+
+The prompt shifts the balance between reusing and creating more than it improves either. The
+duplicates that remain are the same few reuse cases in every variant and on both models. In most
+of them the message is broader or phrased differently than the labeled option's description, so
+creating is defensible. Treat the scores as directional: the variants were chosen after reading
+failures from the full set, with no held-out split.

@@ -1,0 +1,50 @@
+--- a/src/categorize/propose.py
++++ b/src/categorize/propose.py
+@@ -20,6 +20,8 @@
+     """Normalized with `normalize_key`."""
+     description: str
+     """Empty when the LLM reused an option."""
++    examples: tuple[str, ...] = ()
++    """Other inputs that should get a new option; empty when the LLM reused one."""
+ 
+ 
+ def normalize_key(key: str) -> str:
+@@ -74,7 +76,9 @@
+         raise ValueError(f"{data.get('key')!r} is not a usable key")
+     if data.get("decision") == "reuse" and key not in known:
+         raise ValueError(f"{key!r} is not one of the current or retired answers")
+-    return Proposal(key, " ".join(str(data.get("description") or "").split()))
++    examples = data.get("examples") if isinstance(data.get("examples"), list) else []
++    examples = tuple(" ".join(str(e).split()) for e in examples if str(e).strip())[:3]
++    return Proposal(key, " ".join(str(data.get("description") or "").split()), examples)
+ 
+ 
+ def _prompt(
+@@ -108,8 +112,10 @@
+         "other inputs "
+         "could share, not the details of this input, and at the same level of generality as "
+         "the current answers. The description is one sentence saying which inputs the answer "
+-        "covers, written so the classifier can tell it apart from the other answers. Reply "
+-        "with only a JSON object with the fields decision, key, and description."
++        "covers, written so the classifier can tell it apart from the other answers. Also give "
++        "two examples: short inputs, different from this one, that should get the same answer. "
++        "Reply with only a JSON object with the fields decision, key, description, and examples "
++        "(a list, empty when reusing)."
+     )
+     return "\n\n".join(sections)
+ 
+--- a/src/categorize/open_choice.py
++++ b/src/categorize/open_choice.py
+@@ -203,7 +203,11 @@
+         if proposal.key in retired:
+             option = self._retired.pop(retired[proposal.key])
+             return self._use(option.key, "restored", jev, evicted=self._add(option))
+-        evicted = self._add(_Option(proposal.key, proposal.description or None))
++        # Examples go in the description jev sees, since jev matches better with example inputs.
++        description: JSONContent | None = proposal.description or None
++        if proposal.examples:
++            description = {"what": proposal.description, "examples": list(proposal.examples)}
++        evicted = self._add(_Option(proposal.key, description))
+         return self._use(proposal.key, "created", jev, evicted=evicted)
+ 
+     def _use(self, key: str, outcome: Outcome, jev: ChoiceAnswer | None, evicted: str | None = None) -> OpenAnswer:
